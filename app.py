@@ -36,22 +36,44 @@ def login():
     return render_template('login.html', msg=msg)
 
 
+# 회원가입 API
+#
+#   1. 회원가입페이지 보여주기 render_template
 @app.route('/register')
 def register():
     return render_template('register.html')
 
+#   2. 회원가입 저장 API
+#
+#   사용자 요청
+#
+#       아이디, 패스워드, 닉네임
+#       id_give, pw_give, nickname_give
+#
+#   처리
+#
+#       변수로 사용자 요청 값 저장(아이디, 패스워드, 닉네임)
+#       비밀번호 암호화
+#       딕셔너리 형태로 사용자 요청 값 도큐먼트화
+#       db insert 메서드
+#
+#   데이터 응답
+#
+#       결과는 성공, '회원가입에 성공했습니다' 메시지
 
 @app.route('/api/register', methods=['POST'])
 def api_register():
+    # 사용자 요청
+    # 변수 지정
     id_receive = request.form['id_give']
     pw_receive = request.form['pw_give']
     nickname_receive = request.form['nickname_give']
-
+    # 암호화 메서드(import hashlib)
     pw_hash = hashlib.sha256(pw_receive.encode('utf-8')).hexdigest()
-
+    # 데이터베이스에 아이디, 비밀번호, 닉네임 저장
     db.user.insert_one({'id': id_receive, 'pw': pw_hash, 'nick': nickname_receive})
-
-    return jsonify({'result': 'success'})
+    # 응답데이터 리턴
+    return jsonify({'result': 'success', 'msg': '회원가입에 성공했습니다!'})
 
 
 @app.route('/api/login', methods=['POST'])
