@@ -22,17 +22,45 @@ import datetime
 import hashlib
 
 
-
+# 메인페이지 API
+#
+#   토큰을 가지고 있다면 로그인이 되어있는 화면 유지
+#
+#   사용자 요청
+#
+#       토큰 : 로그인 유지하기 위해서
+#
+#   처리
+#
+#       토큰 복호화
+#       user_info : 페이로드 아이디로 데이터베이스 전부 조회, 변수 선언, list 형식
+#       닉네임 가져오기, 시간 가져오기 user['nick'] user['exp']
+#
+#       instagram이라면,
+#       닉네임, 게시글, 팔로잉, 팔로워, 스토리, 추천인물
+#
+#   데이터 응답
+#
+#       닉네임, 시간, 메시지, 결과
 @app.route('/')
 def home():
+    # 사용차 요청
     token_receive = request.cookies.get('mytoken')
+    # 트라이 구문
     try:
+        # 토큰 복호화 - 페이로드 변수 선언
         payload = jwt.decode(token_receive, SECRET_KEY, algorithms=['HS256'])
+        # 페이로드 아이디로 데이터베이스 조회, 변수 선언
         user_info = db.user.find_one({"id": payload['id']})
+        # 성공 : 메인화면을 보여주고 닉네임 변수를 jinja로 사용하기 위해서 선언
         return render_template('index.html', nickname=user_info["nick"])
+    # 만료 에러 : 로그인 페이지로 이동, 메시지 리턴
     except jwt.ExpiredSignatureError:
+        # 로그인페이지로 이동하고, 메시지를 jinja로 사용하기 위해 선언
         return redirect(url_for("login", msg="로그인 시간이 만료되었습니다."))
+    # 복호화 에러 : 로그인 페이지로 이동, 메시지 리턴
     except jwt.exceptions.DecodeError:
+        # 로그인페이지로 이동하고, 메시리를 jinja로 사용하기 위해 선언
         return redirect(url_for("login", msg="로그인 정보가 존재하지 않습니다."))
 
 
