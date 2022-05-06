@@ -7,12 +7,18 @@ from pymongo import MongoClient
 client = MongoClient('mongodb://3.34.44.93', 27017, username="sparta", password="woowa")
 db = client.dbsparta_plus_week4
 
+# jwt 키를 복호화 하기 위한 암호키
+# 보여주면 안됨
 SECRET_KEY = 'rainbow'
 
+# jwt 토큰을 쓰기 위한 라이브러리
+# 다운로드할 패키지 이름은 PyJWT
 import jwt
 
+# 시간 관련 라이브러리
 import datetime
 
+# 암호화 기본 라이브러리
 import hashlib
 
 
@@ -76,24 +82,64 @@ def api_register():
     return jsonify({'result': 'success', 'msg': '회원가입에 성공했습니다!'})
 
 
+
+
+# 로그인 API
+#
+#   로그인이 POST 타입이어야 하는 이유
+#
+#       GET 타입이라면 브라우저 주소에 데이터 전부 노출되어 버림!
+#
+#   사용자 요청
+#
+#       아이디, 비밀번호
+#       id_give, pw_give
+#
+#   처리
+#
+#       대조 : 원래 갖고 있던 것과 사용자가 입력한 것을
+#       비밀번호 요청 변수 암호화
+#       db.find_one 메서드 이용
+#       토큰 페이로드
+#
+#   데이터 응답
+#
+#       성공: 로그인에 성공했습니다 메시지 / 닉네임 / 토큰 / 메인 창 이동
+#       실패: 다시 로그인 정보를 입력해주세요
+
 @app.route('/api/login', methods=['POST'])
 def api_login():
+    # 사용자 요청 값 변수 선언
     id_receive = request.form['id_give']
     pw_receive = request.form['pw_give']
 
+    # 암호화 변수 담기
     pw_hash = hashlib.sha256(pw_receive.encode('utf-8')).hexdigest()
 
+    # 유저 DB에서 아이디와 패스워드가 동시에 일치하는 데이터를 찾기
+    # 찾는 값은 괄호 안에 하나로 묶여 있어야 함!
     result = db.user.find_one({'id': id_receive, 'pw': pw_hash})
 
+    # 결과의 내용이 있다면,
     if result is not None:
+        # jwt 페이로드 선언
+        # 담고 싶은 내용을 담을 수 있음
         payload = {
+            # 사용자 식별 정보
             'id': id_receive,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=5)
+            # 토큰 유효 기간
+            # 24시간 만료(timedelta second 활용)
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=60 * 60 * 24)
         }
+        # 토큰발행
+        # 시크릿키, HS256암호화 알고리즘을 사용해 암호화
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
+        # 성공 데이터 응답 : 성공 메시지와 토큰
         return jsonify({'result': 'success', 'token': token})
+    # 실패 데이터 응답
     else:
+        # 아이디 비밀번호가 일치하지 않습니다 메시지
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
 
 

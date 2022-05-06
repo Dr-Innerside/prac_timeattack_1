@@ -18,27 +18,42 @@
 
 
         <script>
+            // 정확하지 않음!!!
+            // 만약 메시지(서버에서 보내준 성공/실패)가 있다면,
             {% if msg %}
+                // 메시지를 alert로 띄워줌
                 alert("{{ msg }}")
             {% endif %}
+
+
             // ['쿠키'라는 개념에 대해 알아봅시다]
             // 로그인을 구현하면, 반드시 쿠키라는 개념을 사용합니다.
             // 페이지에 관계없이 브라우저에 임시로 저장되는 정보입니다. 키:밸류 형태(딕셔너리 형태)로 저장됩니다.
             // 쿠키가 있기 때문에, 한번 로그인하면 네이버에서 다시 로그인할 필요가 없는 것입니다.
             // 브라우저를 닫으면 자동 삭제되게 하거나, 일정 시간이 지나면 삭제되게 할 수 있습니다.
+
+
+            // 사용자 요청으로 아이디, 비밀번호를 보내고 토큰을 받아오는 AJAX call
             function login() {
                 $.ajax({
+                    // 로그인 http method type
+                    // 브라우저 노출되면 안되기 때문에 POST
                     type: "POST",
+                    // app.route 주소
                     url: "/api/login",
+                    // 사용자 요청 데이터 형식
                     data: {id_give: $('#userid').val(), pw_give: $('#userpw').val()},
+                    // 응답에 성공하면,
                     success: function (response) {
+                        // 결과 값이 성공이면,
                         if (response['result'] == 'success') {
                             // 로그인이 정상적으로 되면, 토큰을 받아옵니다.
                             // 이 토큰을 mytoken이라는 키 값으로 쿠키에 저장합니다.
                             $.cookie('mytoken', response['token']);
-
+                            // alert로 로그인 완료 메시지 보내기
                             alert('로그인 완료!')
                             window.location.href = '/'
+                        // 결과 값이 실패면,
                         } else {
                             // 로그인이 안되면 에러메시지를 띄웁니다.
                             alert(response['msg'])
