@@ -19,9 +19,13 @@
 
 
     <script>
+        // 로그아웃 함수
       function logout(){
+          // 쿠키를 삭제하기만 하면 됨
         $.removeCookie('mytoken');
+        // alert 띄워줌
         alert('로그아웃!')
+          // 다시 로그인 페이지로 보내기
         window.location.href='/login'
       }
 
@@ -33,7 +37,9 @@
       <h1 class="title">로그인하고 5초 동안만 볼 수 있는 페이지입니다.</h1>
       <h1 class="subtitle">계속 새로고침 해보세요</h1>
     </p>
+    <!-- 닉네임 불러오기 API의 데이터를 보여주는 곳! -->
     <h5 class="subtitle">나의 닉네임은: {{nickname}}</h5>
+    <!-- 로그아웃 함수 -->
     <button class="button is-danger" onclick="logout()">로그아웃하기</button>
   </body>
 </html>

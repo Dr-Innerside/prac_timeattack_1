@@ -128,6 +128,7 @@ def api_login():
             # 사용자 식별 정보
             'id': id_receive,
             # 토큰 유효 기간
+            # 국제 시간 (utcnow 활용)
             # 24시간 만료(timedelta second 활용)
             'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=60 * 60 * 24)
         }
@@ -143,19 +144,49 @@ def api_login():
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
 
 
+# 닉네임 불러오기 API
+# 닉네임 뿐만 아니라, 데이터베이스 내부 정보를 모두 불러올 수 있음!
+#
+#   사용자 요청
+#
+#       토큰 : 저장된 쿠키에 있는 토큰을 가져옴!
+#       token_receive
+#
+#   처리
+#
+#       토큰을 복호화해서 페이로드에 있는 아이디로 닉네임 데이터베이스에 조회, 변수 선언
+#       db.find_one 활용해서 닉네임 변수 선언
+#       조건 : 닉네임 변수가 None이 아니라면
+#
+#   데이터 응답
+#
+#       성공 : 닉네임, 팔로우, 팔로잉, 피드 등
+#       실패 : 서버오류 - 몽고DB 401
+#       만료 : 만료된 토큰입니다
 @app.route('/api/nick', methods=['GET'])
 def api_valid():
+    # 사용자 요청
     token_receive = request.cookies.get('mytoken')
 
-
+    # try 구문
+    # 에러와 예외처리에 용이
+    # 에러가 발생할 것 같은 코드를 사용할 때, 에러를 정해두면 프로그램이 멈추지 않고 처리
+    # 경우에 따라 if,else 사용할 수 있음
     try:
+        # 페이로드 복호화
         payload = jwt.decode(token_receive, SECRET_KEY, algorithms=['HS256'])
         print(payload)
 
-        userinfo = db.user.find_one({'id': payload['id']}, {'_id': 0})
+        # 페이로드의 아이디에 관련된 데이터를 변수 선언
+        userinfo = db.user.find_one({'id': payload['id']}, {'_id': False})
+
+        # 성공 데이터 응답: 성공결과, 닉네임 정보
         return jsonify({'result': 'success', 'nickname': userinfo['nick']})
+
+    # 에러 : 토큰 만료 - 실패결과, 메시지
     except jwt.ExpiredSignatureError:
         return jsonify({'result': 'fail', 'msg': '로그인 시간이 만료되었습니다.'})
+    # 에러 : 토큰이 없는 경우 - 실패결과, 메시지 / ? 401처리(추후논의)
     except jwt.exceptions.DecodeError:
         return jsonify({'result': 'fail', 'msg': '로그인 정보가 존재하지 않습니다.'})
 
